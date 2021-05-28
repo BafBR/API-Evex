@@ -10,11 +10,9 @@ const config = require('./config.json')
 
 const app = express()
 const port = 3000
-const sqlConfig = config.sqlConfig
 
-sql.connect(sqlConfig)
-	.then((conn) => (global.conn = conn))
-	.catch((err) => console.log(err))
+const pool = new sql.ConnectionPool(config.sqlConfig)
+const poolConnect = pool.connect()
 
 app.use(bodyParser.urlencoded({ extended: true }))
 app.use(bodyParser.json())
@@ -132,8 +130,7 @@ router.post('/departamentos', async (req, res) => {
 		(result) => {
 			if (result.error) result.status = 400
 			else result.status = 200
-			res.sendStatus(result.status)
-			return
+			return res.sendStatus(result.status)
 		}
 	)
 })
@@ -237,6 +234,8 @@ router.get('/locais', async (req, res) => {
 app.listen(port, () => console.log('O servidor esta ativo'))
 
 const executeSql = async (query, fields, callback) => {
+	await poolConnect
+	console.log(`[sql] exec: ${query};`)
 	try {
 		const request = pool.request()
 		if (fields)
@@ -244,25 +243,16 @@ const executeSql = async (query, fields, callback) => {
 				request.input(field[0], field[1], field[2])
 			})
 		const result = await request.query(query)
-		let resParse = []
-		result.recordset.forEach((res) => {
-			resParse.push({ ra: res.RA, nome: res.Nome, email: res.Email })
-		})
 		callback({
 			rowsAffected: result.rowsAffected[0],
-			recordset: resParse,
+			recordset: result.recordset,
 		})
 	} catch (err) {
-		let error
-		try {
-			let dbError = err.originalError.info.message
-			if (dbError.includes('Violation of PRIMARY KEY'))
-				error = 'Registro já existe'
-		} catch (e) {}
+		console.error(err)
 		callback({
 			rowsAffected: 0,
 			recordset: [],
-			error: error,
+			error: err,
 		})
 	}
 }
