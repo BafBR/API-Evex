@@ -53,14 +53,14 @@ router.put('/funcionario', async (req, res) => {
 })
 
 // GET todos os funcionarios
-router.get('/funcionarios', (req, res) => {
+router.get('/funcionarios', async (req, res) => {
 	const funcionarios = await execSQLQuery(`select * from evex.Funcionario`)
 	res.send({ res: funcionarios })
 })
 
 // GET um funcionario
 // funcionario -> id do funcionario
-router.get('/funcionario', (req, res) => {
+router.get('/funcionario', async (req, res) => {
 	const funcionario = req.body.funcionario
 	const eventos = await execSQLQuery(
 		`select * from evex.Funcionario where funcionario = ${funcionario}`
@@ -69,14 +69,14 @@ router.get('/funcionario', (req, res) => {
 })
 
 // GET todos os departamentos
-router.get('/departamentos', (req, res) => {
+router.get('/departamentos', async (req, res) => {
 	const departamento = await execSQLQuery(`select * from evex.Departamento`)
 	res.send({ res: departamento })
 })
 
 // GET todos os eventos dos quais um funcionario participa
 // funcionario -> id do funcionario participante
-router.get('/eventos', (req, res) => {
+router.get('/eventos', async (req, res) => {
 	const funcionario = req.body.funcionario
 	const eventos = await execSQLQuery(
 		`select * from evex.Participantes where funcionario = ${funcionario}`
@@ -86,7 +86,7 @@ router.get('/eventos', (req, res) => {
 
 // POST cria um novo evento
 // responsavel -> id do funcionario responsavel
-router.post('/eventos', (req, res) => {
+router.post('/eventos', async (req, res) => {
 	const titulo = req.body.titulo
 	const tipo = req.body.tipo
 	const subtipo = req.body.subtipo
@@ -100,7 +100,7 @@ router.post('/eventos', (req, res) => {
 
 // POST cria um novo evento
 // responsavel -> id do funcionario responsavel
-router.put('/eventos', (req, res) => {
+router.put('/eventos', async (req, res) => {
 	const id = req.body.id
 	const titulo = req.body.titulo
 	const tipo = req.body.tipo
@@ -114,26 +114,26 @@ router.put('/eventos', (req, res) => {
 })
 
 // GET todos os tipos de evento
-router.get('/tipos', (req, res) => {
+router.get('/tipos', async (req, res) => {
 	const tipos = await execSQLQuery(`select * from evex.TipoEvento`)
 	res.send({ res: tipos })
 })
 
 // GET todos os subtipos de evento
-router.get('/subtipos', (req, res) => {
+router.get('/subtipos', async (req, res) => {
 	const subtipos = await execSQLQuery(`select * from evex.SubTipoEvento`)
 	res.send({ res: subtipos })
 })
 
 // GET todos os locais de evento
-router.get('/locais', (req, res) => {
+router.get('/locais', async (req, res) => {
 	const locais = await execSQLQuery(`select * from evex.Localizacoes`)
 	res.send({ res: locais })
 })
 
 app.listen(port).then(() => console.log('O servidor esta ativo'))
 
-function execSQLQuery(sqlQry) {
+const execSQLQuery = (sqlQry) => {
 	console.log(`[sql] exec: ${sqlQry}`)
 	return global.conn.request().query(sqlQry)
 }
