@@ -6,11 +6,13 @@ const express = require('express')
 const bodyParser = require('body-parser')
 const sql = require('mssql')
 
+const config = require('./config.json')
+
 const app = express()
 const port = 3000
-const connStr = process.env.CONN_STRING
+const sqlConfig = config.sqlConfig
 
-sql.connect(connStr)
+sql.connect(sqlConfig)
 	.then((conn) => (global.conn = conn))
 	.catch((err) => console.log(err))
 
@@ -131,7 +133,7 @@ router.get('/locais', async (req, res) => {
 	res.send({ res: locais })
 })
 
-app.listen(port).then(() => console.log('O servidor esta ativo'))
+app.listen(port, () => console.log('O servidor esta ativo'))
 
 const execSQLQuery = (sqlQry) => {
 	console.log(`[sql] exec: ${sqlQry}`)
