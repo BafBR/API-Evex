@@ -144,7 +144,7 @@ router.get('/eventos', async (req, res) => {
 	executeSql(
 		`select * from evex.Participantes where funcionario = @funcionario`,
 		{
-			fields: [['funcionario', sql.VarChar(255), funcionario]],
+			fields: [['funcionario', sql.Int, funcionario]],
 		},
 		(result) => res.json(result)
 	)
@@ -153,22 +153,26 @@ router.get('/eventos', async (req, res) => {
 // POST cria um novo evento
 router.post('/eventos', async (req, res) => {
 	const titulo = req.body.titulo
+	const responsavel = req.body.responsavel
 	const tipo = req.body.tipo
 	const subtipo = req.body.subtipo
-	const datahora = req.body.datahora
-	const responsavel = req.body.responsavel
-	if (!titulo || !tipo || !datahora || !responsavel)
+	let datahora = req.body.datahora
+	const localizacao = req.body.localizacao
+	if (!titulo || !responsavel || !tipo || !datahora || !localizacao)
 		return res.sendStatus(400)
 
+	datahora = new Date(datahora)
+
 	executeSql(
-		'insert into evex.Evento values(@titulo, @tipo, @subtipo, @datahora, @responsavel)',
+		'insert into evex.Evento values(@titulo, @responsavel, @tipo, @subtipo, @datahora, @localizacao)',
 		{
 			fields: [
 				['titulo', sql.VarChar(255), titulo],
+				['responsavel', sql.Int, responsavel],
 				['tipo', sql.VarChar(255), tipo],
 				['subtipo', sql.VarChar(255), subtipo],
 				['datahora', sql.DateTime, datahora],
-				['responsavel', sql.Int, responsavel],
+				['localizacao', sql.Int, localizacao],
 			],
 		},
 		(result) => {
@@ -181,25 +185,28 @@ router.post('/eventos', async (req, res) => {
 
 // PUT edita um evento
 router.put('/eventos', async (req, res) => {
-	const id = req.body.id
 	const titulo = req.body.titulo
+	const responsavel = req.body.responsavel
 	const tipo = req.body.tipo
 	const subtipo = req.body.subtipo
-	const datahora = req.body.datahora
-	const responsavel = req.body.responsavel
-	if (!id || !titulo || !tipo || !datahora || !responsavel)
+	let datahora = req.body.datahora
+	const localizacao = req.body.localizacao
+	if (!titulo || !responsavel || !tipo || !datahora || !localizacao)
 		return res.sendStatus(400)
 
+	datahora = new Date(datahora)
+
 	executeSql(
-		'update evex.Evento set titulo = @titulo, tipo = @tipo, subtipo = @subtipo, datahora = @datahora, responsavel = @responsavel where id = @id',
+		'update evex.Evento set titulo = @titulo, responsavel = @responsavel, tipo = @tipo, subtipo = @subtipo, datahora = @datahora, localizacao = @localizacao where id = @id',
 		{
 			fields: [
 				['id', sql.Int, id],
 				['titulo', sql.VarChar(255), titulo],
+				['responsavel', sql.Int, responsavel],
 				['tipo', sql.VarChar(255), tipo],
 				['subtipo', sql.VarChar(255), subtipo],
 				['datahora', sql.DateTime, datahora],
-				['responsavel', sql.Int, responsavel],
+				['localizacao', sql.Int, localizacao],
 			],
 		},
 		(result) => {
@@ -244,8 +251,8 @@ const executeSql = async (query, fields, callback) => {
 			})
 		const result = await request.query(query)
 		callback({
-			rowsAffected: result.rowsAffected[0],
-			recordset: result.recordset,
+			qtd: result.rowsAffected[0],
+			resultados: result.recordset,
 		})
 	} catch (err) {
 		console.error(err)
