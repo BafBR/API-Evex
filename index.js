@@ -137,7 +137,7 @@ router.post('/departamentos', async (req, res) => {
 
 // GET todos os eventos dos quais um funcionario participa
 // funcionario -> id do funcionario participante
-router.get('/eventos', async (req, res) => {
+router.get('/eventos/participo', async (req, res) => {
 	const funcionario = req.body.funcionario
 	if (!funcionario) return res.sendStatus(400)
 
@@ -147,6 +147,43 @@ router.get('/eventos', async (req, res) => {
 			fields: [['funcionario', sql.Int, funcionario]],
 		},
 		(result) => res.json(result)
+	)
+})
+
+// GET todos os eventos que um funcionario gerencia
+// funcionario -> id do funcionario responsável
+router.get('/eventos/gerencio', async (req, res) => {
+	const funcionario = req.body.funcionario
+	if (!funcionario) return res.sendStatus(400)
+
+	executeSql(
+		`select * from evex.Evento where responsavel = @funcionario`,
+		{
+			fields: [['funcionario', sql.Int, funcionario]],
+		},
+		(result) => res.json(result)
+	)
+})
+
+// POST cria uma nova participação
+router.post('/participantes', async (req, res) => {
+	const evento = req.body.evento
+	const funcionario = req.body.funcionario
+	if (!evento || !funcionario) return res.sendStatus(400)
+
+	executeSql(
+		'insert into evex.Participantes values(@evento, @funcionario)',
+		{
+			fields: [
+				['evento', sql.Int, evento],
+				['funcionario', sql.Int, funcionario],
+			],
+		},
+		(result) => {
+			if (result.error) result.status = 400
+			else result.status = 200
+			return res.sendStatus(result.status)
+		}
 	)
 })
 
