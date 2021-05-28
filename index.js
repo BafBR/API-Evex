@@ -25,10 +25,11 @@ router.get('/', (req, res) => res.json({ mensagem: 'A API esta ativa' }))
 app.use('/', router)
 
 // POST cadastrar novo funcionario
-router.post('/funcionario', async (req, res) => {
+router.post('/funcionarios', async (req, res) => {
 	const nome = req.body.nome
 	const apelido = req.body.apelido
 	const departamento = req.body.departamento
+	if (!nome || !apelido || !departamento) return res.sendStatus(400)
 
 	execSQLQuery(
 		`insert into evex.Funcionario values(nome = ${nome}, apelido = ${apelido}, departamento = ${departamento})`
@@ -38,6 +39,8 @@ router.post('/funcionario', async (req, res) => {
 // DELETE um funcionario
 router.delete('/funcionario', async (req, res) => {
 	const id = req.body.id
+	if (!id) return res.sendStatus(400)
+
 	execSQLQuery(`delete from evex.Funcionario where id = ${id}`)
 	res.sendStatus(200)
 })
@@ -48,6 +51,8 @@ router.put('/funcionario', async (req, res) => {
 	const nome = req.body.nome
 	const apelido = req.body.apelido
 	const departamento = req.body.departamento
+	if (!id || !nome || !apelido || !departamento) return res.sendStatus(400)
+
 	execSQLQuery(
 		`update evex.Funcionario set nome = ${nome}, apelido = ${apelido}, departamento = ${departamento} where id = ${id}`
 	)
@@ -64,6 +69,8 @@ router.get('/funcionarios', async (req, res) => {
 // funcionario -> id do funcionario
 router.get('/funcionario', async (req, res) => {
 	const funcionario = req.body.funcionario
+	if (!funcionario) return res.sendStatus(400)
+
 	const eventos = await execSQLQuery(
 		`select * from evex.Funcionario where funcionario = ${funcionario}`
 	)
@@ -73,6 +80,8 @@ router.get('/funcionario', async (req, res) => {
 // GET todos os departamentos
 router.get('/departamentos', async (req, res) => {
 	const departamento = await execSQLQuery(`select * from evex.Departamento`)
+	if (!departamento) return res.sendStatus(400)
+
 	res.send({ res: departamento })
 })
 
@@ -80,6 +89,8 @@ router.get('/departamentos', async (req, res) => {
 // funcionario -> id do funcionario participante
 router.get('/eventos', async (req, res) => {
 	const funcionario = req.body.funcionario
+	if (!funcionario) return res.sendStatus(400)
+
 	const eventos = await execSQLQuery(
 		`select * from evex.Participantes where funcionario = ${funcionario}`
 	)
@@ -94,6 +105,9 @@ router.post('/eventos', async (req, res) => {
 	const subtipo = req.body.subtipo
 	const datahora = req.body.datahora
 	const responsavel = req.body.responsavel
+	if (!titulo || !tipo || !datahora || !responsavel)
+		return res.sendStatus(400)
+
 	const eventos =
 		await execSQLQuery(`insert into evex.Participantes values(titulo = ${titulo}, tipo = ${tipo}, subtipo = ${subtipo},
                                         datahora = ${datahora}, responsavel = ${responsavel}`)
@@ -109,6 +123,9 @@ router.put('/eventos', async (req, res) => {
 	const subtipo = req.body.subtipo
 	const datahora = req.body.datahora
 	const responsavel = req.body.responsavel
+	if (!id || !titulo || !tipo || !datahora || !responsavel)
+		return res.sendStatus(400)
+
 	const eventos =
 		await execSQLQuery(`update evex.Participantes set titulo = ${titulo}, tipo = ${tipo}, subtipo = ${subtipo},
                                         datahora = ${datahora}, responsavel = ${responsavel} where id = ${id}`)
@@ -118,18 +135,24 @@ router.put('/eventos', async (req, res) => {
 // GET todos os tipos de evento
 router.get('/tipos', async (req, res) => {
 	const tipos = await execSQLQuery(`select * from evex.TipoEvento`)
+	if (!tipos) return res.sendStatus(400)
+
 	res.send({ res: tipos })
 })
 
 // GET todos os subtipos de evento
 router.get('/subtipos', async (req, res) => {
 	const subtipos = await execSQLQuery(`select * from evex.SubTipoEvento`)
+	if (!subtipos) return res.sendStatus(400)
+
 	res.send({ res: subtipos })
 })
 
 // GET todos os locais de evento
 router.get('/locais', async (req, res) => {
 	const locais = await execSQLQuery(`select * from evex.Localizacoes`)
+	if (!locais) return res.sendStatus(400)
+
 	res.send({ res: locais })
 })
 
