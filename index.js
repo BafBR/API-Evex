@@ -190,6 +190,7 @@ router.post('/participantes', async (req, res) => {
 // POST cria um novo evento
 router.post('/eventos', async (req, res) => {
 	const titulo = req.body.titulo
+	const descricao = req.body.descricao
 	const responsavel = req.body.responsavel
 	const tipo = req.body.tipo
 	const subtipo = req.body.subtipo
@@ -201,10 +202,11 @@ router.post('/eventos', async (req, res) => {
 	datahora = new Date(datahora)
 
 	executeSql(
-		'insert into evex.Evento values(@titulo, @responsavel, @tipo, @subtipo, @datahora, @localizacao)',
+		'insert into evex.Evento values(@titulo, @descricao, @responsavel, @tipo, @subtipo, @datahora, @localizacao)',
 		{
 			fields: [
 				['titulo', sql.VarChar(255), titulo],
+				['descricao', sql.Text, descricao],
 				['responsavel', sql.Int, responsavel],
 				['tipo', sql.VarChar(255), tipo],
 				['subtipo', sql.VarChar(255), subtipo],
@@ -223,6 +225,7 @@ router.post('/eventos', async (req, res) => {
 // PUT edita um evento
 router.put('/eventos', async (req, res) => {
 	const titulo = req.body.titulo
+	const descricao = req.body.descricao
 	const responsavel = req.body.responsavel
 	const tipo = req.body.tipo
 	const subtipo = req.body.subtipo
@@ -234,11 +237,12 @@ router.put('/eventos', async (req, res) => {
 	datahora = new Date(datahora)
 
 	executeSql(
-		'update evex.Evento set titulo = @titulo, responsavel = @responsavel, tipo = @tipo, subtipo = @subtipo, datahora = @datahora, localizacao = @localizacao where id = @id',
+		'update evex.Evento set titulo = @titulo, descricao = @descricao, responsavel = @responsavel, tipo = @tipo, subtipo = @subtipo, datahora = @datahora, localizacao = @localizacao where id = @id',
 		{
 			fields: [
 				['id', sql.Int, id],
 				['titulo', sql.VarChar(255), titulo],
+				['descricao', sql.Text, descricao],
 				['responsavel', sql.Int, responsavel],
 				['tipo', sql.VarChar(255), tipo],
 				['subtipo', sql.VarChar(255), subtipo],
