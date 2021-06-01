@@ -3,7 +3,6 @@
 // 19191 Nicolas Denadai Schmidt
 
 const express = require('express')
-const bodyParser = require('body-parser')
 const sql = require('mssql')
 
 const config = require('./config.json')
@@ -14,12 +13,12 @@ const port = 3000
 const pool = new sql.ConnectionPool(config.sqlConfig)
 const poolConnect = pool.connect()
 
-app.use(bodyParser.urlencoded({ extended: true }))
-app.use(bodyParser.json())
+app.use(express.urlencoded({ extended: true }))
+app.use(express.json())
 
 const router = express.Router()
 
-router.get('/', (req, res) => res.json({ mensagem: 'A API esta ativa' }))
+router.get('/', (_req, res) => res.sendStatus(200))
 app.use('/', router)
 
 // GET todos os funcionarios
