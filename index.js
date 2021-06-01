@@ -4,6 +4,7 @@
 
 const express = require('express')
 const sql = require('mssql')
+const cors = require('cors')
 
 const config = require('./config.json')
 
@@ -15,6 +16,7 @@ const poolConnect = pool.connect()
 
 app.use(express.urlencoded({ extended: true }))
 app.use(express.json())
+app.use(cors())
 
 const router = express.Router()
 
