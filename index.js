@@ -292,10 +292,11 @@ const executeSql = async (query, fields, callback) => {
 				request.input(field[0], field[1], field[2])
 			})
 		const result = await request.query(query)
-		callback({
-			qtd: result.rowsAffected[0],
-			resultados: result.recordset,
-		})
+		// callback({
+		// 	qtd: result.rowsAffected[0],
+		// 	resultados: result.recordset,
+		// })
+		callback(result.recordset)
 	} catch (err) {
 		console.error(err)
 		callback({
