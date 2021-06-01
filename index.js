@@ -41,7 +41,7 @@ router.get('/funcionario', async (req, res) => {
 		{
 			fields: [['funcionario', sql.VarChar(255), funcionario]],
 		},
-		(result) => res.json(result)
+		(result) => res.json(result.results)
 	)
 })
 
@@ -125,14 +125,19 @@ router.post('/departamentos', async (req, res) => {
 
 	executeSql(
 		'insert into evex.Departamento values(@nome)',
-		{
-			fields: [['nome', sql.VarChar(255), nome]],
-		},
+		{ fields: [['nome', sql.VarChar(255), nome]] },
 		(result) => {
-			if (result.error) result.status = 400
-			else result.status = 200
+			if (!result || result.success) result.status = 200
+			else result.status = 400
 			return res.sendStatus(result.status)
 		}
+	)
+})
+
+// GET todos os eventos
+router.get('/eventos', async (req, res) => {
+	executeSql(`select * from evex.Evento`, null, (result) =>
+		res.json(result.results)
 	)
 })
 
@@ -147,7 +152,7 @@ router.get('/eventos/participo', async (req, res) => {
 		{
 			fields: [['funcionario', sql.Int, funcionario]],
 		},
-		(result) => res.json(result)
+		(result) => res.json(result.results)
 	)
 })
 
@@ -162,7 +167,7 @@ router.get('/eventos/gerencio', async (req, res) => {
 		{
 			fields: [['funcionario', sql.Int, funcionario]],
 		},
-		(result) => res.json(result)
+		(result) => res.json(result.results)
 	)
 })
 
@@ -181,8 +186,9 @@ router.post('/participantes', async (req, res) => {
 			],
 		},
 		(result) => {
-			if (result.error) result.status = 400
-			else result.status = 200
+			if (!result.status)
+				if (result.error) result.status = 400
+				else result.status = 200
 			return res.sendStatus(result.status)
 		}
 	)
@@ -292,17 +298,11 @@ const executeSql = async (query, fields, callback) => {
 				request.input(field[0], field[1], field[2])
 			})
 		const result = await request.query(query)
-		// callback({
-		// 	qtd: result.rowsAffected[0],
-		// 	resultados: result.recordset,
-		// })
-		callback(result.recordset)
+		callback({ success: true, results: result.recordset })
 	} catch (err) {
 		console.error(err)
 		callback({
-			rowsAffected: 0,
-			recordset: [],
-			error: err,
+			success: false,
 		})
 	}
 }
