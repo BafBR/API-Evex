@@ -31,7 +31,7 @@ router.get('/funcionarios', async (req, res) => {
 // GET um funcionario
 // funcionario -> id do funcionario
 router.get('/funcionario', async (req, res) => {
-	const funcionario = req.body.funcionario
+	const funcionario = req.query.funcionario
 	if (!funcionario) return res.sendStatus(400)
 
 	executeSql(
@@ -137,7 +137,7 @@ router.post('/departamentos', async (req, res) => {
 // GET todos os eventos dos quais um funcionario participa
 // funcionario -> id do funcionario participante
 router.get('/eventos/participo', async (req, res) => {
-	const funcionario = req.body.funcionario
+	const funcionario = req.query.funcionario
 	if (!funcionario) return res.sendStatus(400)
 
 	executeSql(
@@ -152,7 +152,7 @@ router.get('/eventos/participo', async (req, res) => {
 // GET todos os eventos que um funcionario gerencia
 // funcionario -> id do funcionario responsável
 router.get('/eventos/gerencio', async (req, res) => {
-	const funcionario = req.body.funcionario
+	const funcionario = req.query.funcionario
 	if (!funcionario) return res.sendStatus(400)
 
 	executeSql(
