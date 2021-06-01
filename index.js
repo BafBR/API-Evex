@@ -1,6 +1,6 @@
-//Bruno     19164
-//Eduardo   19167
-//Nicolas   19191
+// 19164 Bruno Arnone Franchi
+// 19167 Eduardo de Almeida Migueis
+// 19191 Nicolas Denadai Schmidt
 
 const express = require('express')
 const bodyParser = require('body-parser')
