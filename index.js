@@ -219,6 +219,7 @@ router.post('/participantes', async (req, res) => {
 			if (!result.status)
 				if (result.error) result.status = 400
 				else result.status = 200
+			atualizarParticipacoes()
 			return res.sendStatus(result.status)
 		}
 	)
