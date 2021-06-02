@@ -20,29 +20,29 @@ app.use(cors())
 
 const router = express.Router()
 
+const CACHE = {
+	eventos: null,
+	funcionarios: null,
+	departamentos: null,
+	participacoes: null,
+	tipos: null,
+	subtipos: null,
+	locais: null,
+}
+
 router.get('/', (_req, res) => res.sendStatus(200))
 app.use('/', router)
 
-// GET todos os funcionarios
+// GET todos os funcionarios,
+// GET um funcionario por id
 router.get('/funcionarios', async (req, res) => {
-	executeSql(`select * from evex.Funcionario`, null, (result) =>
-		res.json(result)
-	)
-})
+	if (!CACHE.funcionarios) await atualizarFuncionarios()
 
-// GET um funcionario
-// funcionario -> id do funcionario
-router.get('/funcionario', async (req, res) => {
-	const funcionario = req.query.funcionario
-	if (!funcionario) return res.sendStatus(400)
+	const id = req.query.id
+	if (!id) res.json(CACHE.funcionarios)
 
-	executeSql(
-		`select * from evex.Funcionario where funcionario = @funcionario`,
-		{
-			fields: [['funcionario', sql.VarChar(255), funcionario]],
-		},
-		(result) => res.json(result.results)
-	)
+	for (const funcionario of CACHE.funcionarios)
+		if (funcionario.id == id) return res.json(funcionario)
 })
 
 // POST cadastrar novo funcionario
@@ -64,6 +64,7 @@ router.post('/funcionarios', async (req, res) => {
 		(result) => {
 			if (result.error) result.status = 400
 			else result.status = 200
+			atualizarFuncionarios()
 			return res.sendStatus(result.status)
 		}
 	)
@@ -90,6 +91,7 @@ router.put('/funcionario', async (req, res) => {
 		(result) => {
 			if (result.error) result.status = 400
 			else result.status = 200
+			atualizarFuncionarios()
 			return res.sendStatus(result.status)
 		}
 	)
@@ -106,16 +108,22 @@ router.delete('/funcionario', async (req, res) => {
 		(result) => {
 			if (result.error) result.status = 400
 			else result.status = 200
+			atualizarFuncionarios()
 			return res.sendStatus(result.status)
 		}
 	)
 })
 
-// GET todos os departamentos
+// GET todos os departamentos,
+// GET um departamento por id
 router.get('/departamentos', async (req, res) => {
-	executeSql(`select * from evex.Departamento`, null, (result) =>
-		res.json(result)
-	)
+	if (!CACHE.departamentos) await atualizarDepartamentos()
+
+	const id = req.query.id
+	if (!id) res.json(CACHE.departamentos)
+
+	for (const departamento of CACHE.departamentos)
+		if (departamento.id == id) return res.json(departamento)
 })
 
 // POST novo departamento
@@ -129,46 +137,68 @@ router.post('/departamentos', async (req, res) => {
 		(result) => {
 			if (!result || result.success) result.status = 200
 			else result.status = 400
+			atualizarDepartamentos()
 			return res.sendStatus(result.status)
 		}
 	)
 })
 
-// GET todos os eventos
+// GET todos os eventos,
+// GET um evento por id
 router.get('/eventos', async (req, res) => {
-	executeSql(`select * from evex.Evento`, null, (result) =>
-		res.json(result.results)
-	)
+	if (!CACHE.eventos) await atualizarEventos()
+
+	const id = req.query.id
+	if (!id) res.json(CACHE.eventos)
+
+	for (const evento of CACHE.eventos)
+		if (evento.id == id) return res.json(evento)
 })
 
-// GET todos os eventos dos quais um funcionario participa
-// funcionario -> id do funcionario participante
+// GET todos os eventos para os quais um funcionario está convidado
 router.get('/eventos/participo', async (req, res) => {
-	const funcionario = req.query.funcionario
-	if (!funcionario) return res.sendStatus(400)
+	if (!CACHE.eventos) await atualizarEventos()
+	if (!CACHE.participacoes) await atualizarParticipacoes()
 
-	executeSql(
-		`select * from evex.Participantes where funcionario = @funcionario`,
-		{
-			fields: [['funcionario', sql.Int, funcionario]],
-		},
-		(result) => res.json(result.results)
-	)
+	const funcionarioId = req.query.funcionario
+	if (!funcionarioId) res.sendStatus(400)
+
+	let eventos = []
+	for (const participacao of CACHE.participacoes)
+		if (participacao.funcionario.id == funcionarioId)
+			for (const evento of CACHE.eventos)
+				if (evento.id == participacao.evento) eventos.push(evento)
+
+	return res.json(eventos)
 })
 
-// GET todos os eventos que um funcionario gerencia
-// funcionario -> id do funcionario responsável
+// GET todos os eventos que um usuario gerencia
 router.get('/eventos/gerencio', async (req, res) => {
-	const funcionario = req.query.funcionario
-	if (!funcionario) return res.sendStatus(400)
+	if (!CACHE.eventos) await atualizarEventos()
 
-	executeSql(
-		`select * from evex.Evento where responsavel = @funcionario`,
-		{
-			fields: [['funcionario', sql.Int, funcionario]],
-		},
-		(result) => res.json(result.results)
-	)
+	const funcionarioId = req.query.funcionario
+	if (!funcionarioId) res.sendStatus(400)
+
+	let eventos = []
+	for (const evento of CACHE.eventos)
+		if (evento.responsavel.id == funcionarioId) eventos.push(evento)
+
+	return res.json(eventos)
+})
+
+// GET todos os participantes de um evento
+router.get('/participantes', async (req, res) => {
+	if (!CACHE.participacoes) await atualizarParticipacoes()
+
+	const evento = req.query.evento
+	if (!evento) return res.sendStatus(400)
+
+	let participantes = []
+	for (const participacao of CACHE.participacoes)
+		if (participacao.evento == evento)
+			participantes.push(participacao.funcionario)
+
+	return res.json(participantes)
 })
 
 // POST cria uma nova participação
@@ -224,6 +254,7 @@ router.post('/eventos', async (req, res) => {
 		(result) => {
 			if (result.error) result.status = 400
 			else result.status = 200
+			atualizarEventos()
 			return res.sendStatus(result.status)
 		}
 	)
@@ -260,37 +291,165 @@ router.put('/eventos', async (req, res) => {
 		(result) => {
 			if (result.error) result.status = 400
 			else result.status = 200
+			atualizarEventos()
 			return res.sendStatus(result.status)
 		}
 	)
 })
 
-// GET todos os tipos de evento
+// GET todos os tipos,
+// GET um tipo por id
 router.get('/tipos', async (req, res) => {
-	executeSql(`select * from evex.TipoEvento`, null, (result) =>
-		res.json(result)
-	)
+	if (!CACHE.tipos) await atualizarTipos()
+
+	const id = req.query.id
+	if (!id) return res.json(CACHE.tipos)
+
+	for (const tipo of CACHE.tipos) if (tipo.id == id) return res.json(tipo)
 })
 
-// GET todos os subtipos de evento
+// GET todos os subtipos,
+// GET um subtipo por id
 router.get('/subtipos', async (req, res) => {
-	executeSql(`select * from evex.SubTipoEvento`, null, (result) =>
-		res.json(result)
-	)
+	if (!CACHE.subtipos) await atualizarSubtipos()
+
+	const id = req.query.id
+	if (!id) return res.json(CACHE.subtipos)
+
+	for (const subtipo of CACHE.subtipos)
+		if (subtipo.id == id) return res.json(subtipo)
 })
 
-// GET todos os locais de evento
+// GET todos os locais,
+// GET um local por id
 router.get('/locais', async (req, res) => {
-	executeSql(`select * from evex.Localizacoes`, null, (result) =>
-		res.json(result)
-	)
+	if (!CACHE.locais) await atualizarLocais()
+
+	const id = req.query.id
+	if (!id) return res.json(CACHE.locais)
+
+	for (const local of CACHE.locais) if (local.id == id) return res.json(local)
 })
 
-app.listen(port, () => console.log('O servidor esta ativo'))
+app.listen(port, () =>
+	console.log(`[app] listening at http://localhost:${port}/`)
+)
 
-const executeSql = async (query, fields, callback) => {
+function atualizarEventos() {
+	return new Promise((resolve) =>
+		executeSql(`select * from evex.Evento`, null, async (result) => {
+			CACHE.eventos = result.results
+
+			if (!CACHE.funcionarios) await atualizarFuncionarios()
+			if (!CACHE.tipos) await atualizarTipos()
+			if (!CACHE.subtipos) await atualizarSubtipos()
+			if (!CACHE.participacoes) await atualizarParticipacoes()
+			if (!CACHE.locais) await atualizarLocais()
+
+			CACHE.eventos.forEach((evento) => {
+				let userId = evento.responsavel
+				for (let i = 0; i < CACHE.funcionarios.length; i++)
+					if (CACHE.funcionarios[i].id == userId)
+						evento.responsavel = CACHE.funcionarios[i]
+
+				let tipoId = evento.tipo
+				for (let i = 0; i < CACHE.tipos.length; i++)
+					if (CACHE.tipos[i].id == tipoId)
+						evento.tipo = CACHE.tipos[i]
+
+				let subtipoId = evento.subtipo
+				if (subtipoId)
+					for (let i = 0; i < CACHE.subtipos.length; i++)
+						if (CACHE.subtipos[i].id == subtipoId)
+							evento.subtipo = CACHE.subtipos[i]
+
+				let localId = evento.localizacao
+				for (let i = 0; i < CACHE.locais.length; i++)
+					if (CACHE.locais[i].id == localId)
+						evento.localizacao = CACHE.locais[i]
+			})
+			resolve()
+		})
+	)
+}
+
+function atualizarFuncionarios() {
+	return new Promise((resolve) =>
+		executeSql(`select * from evex.Funcionario`, null, async (result) => {
+			CACHE.funcionarios = result.results
+
+			if (!CACHE.departamentos) await atualizarDepartamentos()
+
+			CACHE.funcionarios.forEach((funcionario) => {
+				let departamentoId = funcionario.departamento
+				for (let i = 0; i < CACHE.departamentos.length; i++)
+					if (CACHE.departamentos[i].id == departamentoId)
+						funcionario.departamento = CACHE.departamentos[i]
+			})
+
+			resolve()
+		})
+	)
+}
+
+function atualizarDepartamentos() {
+	return new Promise((resolve) =>
+		executeSql(`select * from evex.Departamento`, null, (result) => {
+			CACHE.departamentos = result.results
+			resolve()
+		})
+	)
+}
+
+function atualizarParticipacoes() {
+	return new Promise((resolve) =>
+		executeSql(`select * from evex.Participantes`, null, async (result) => {
+			CACHE.participacoes = result.results
+
+			if (!CACHE.funcionarios) await atualizarFuncionarios()
+
+			CACHE.participacoes.forEach((participacao) => {
+				let funcionarioId = participacao.funcionario
+				for (let i = 0; i < CACHE.funcionarios.length; i++)
+					if (CACHE.funcionarios[i].id == funcionarioId)
+						participacao.funcionario = CACHE.funcionarios[i]
+			})
+
+			resolve()
+		})
+	)
+}
+
+function atualizarTipos() {
+	return new Promise((resolve) =>
+		executeSql(`select * from evex.TipoEvento`, null, (result) => {
+			CACHE.tipos = result.results
+			resolve()
+		})
+	)
+}
+
+function atualizarSubtipos() {
+	return new Promise((resolve) =>
+		executeSql(`select * from evex.SubTipoEvento`, null, (result) => {
+			CACHE.subtipos = result.results
+			resolve()
+		})
+	)
+}
+
+function atualizarLocais() {
+	return new Promise((resolve) =>
+		executeSql(`select * from evex.Localizacao`, null, (result) => {
+			CACHE.locais = result.results
+			resolve()
+		})
+	)
+}
+
+async function executeSql(query, fields, callback) {
 	await poolConnect
-	console.log(`[sql] exec: ${query};`)
+	console.log(`[sql] ${query};`)
 	try {
 		const request = pool.request()
 		if (fields)
@@ -300,7 +459,7 @@ const executeSql = async (query, fields, callback) => {
 		const result = await request.query(query)
 		callback({ success: true, results: result.recordset })
 	} catch (err) {
-		console.error(err)
+		console.error(`[err] ${err}`)
 		callback({
 			success: false,
 		})
