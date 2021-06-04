@@ -225,26 +225,6 @@ router.post('/participantes', async (req, res) => {
 	)
 })
 
-// POST cria uma nova participação no último evento
-router.post('/participantes/last', async (req, res) => {
-	const funcionario = req.body.funcionario
-	if (!funcionario) return res.sendStatus(400)
-
-	executeSql(
-		'insert into evex.Participantes values(@@identity, @funcionario)',
-		{
-			fields: [['funcionario', sql.Int, funcionario]],
-		},
-		(result) => {
-			if (!result.status)
-				if (result.error) result.status = 400
-				else result.status = 200
-			atualizarParticipacoes()
-			return res.sendStatus(result.status)
-		}
-	)
-})
-
 // POST cria um novo evento
 router.post('/eventos', async (req, res) => {
 	const titulo = req.body.titulo
@@ -260,7 +240,7 @@ router.post('/eventos', async (req, res) => {
 	datahora = new Date(datahora)
 
 	executeSql(
-		'insert into evex.Evento values(@titulo, @descricao, @responsavel, @tipo, @subtipo, @datahora, @localizacao)',
+		'insert into evex.Evento output INSERTED.id values(@titulo, @descricao, @responsavel, @tipo, @subtipo, @datahora, @localizacao)',
 		{
 			fields: [
 				['titulo', sql.VarChar(255), titulo],
@@ -288,7 +268,9 @@ router.post('/eventos', async (req, res) => {
 						if (result.error) result.status = 400
 						else result.status = 200
 					atualizarParticipacoes()
-					return res.sendStatus(result.status)
+					return res
+						.status(result.status)
+						.json({ id: result.results[0].id })
 				}
 			)
 		}
