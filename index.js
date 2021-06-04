@@ -226,7 +226,7 @@ router.post('/participantes', async (req, res) => {
 })
 
 // POST cria uma nova participação no último evento
-router.post('/participantes', async (req, res) => {
+router.post('/participantes/last', async (req, res) => {
 	const funcionario = req.body.funcionario
 	if (!evento || !funcionario) return res.sendStatus(400)
 
