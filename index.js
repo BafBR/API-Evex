@@ -256,7 +256,21 @@ router.post('/eventos', async (req, res) => {
 			if (result.error) result.status = 400
 			else result.status = 200
 			atualizarEventos()
-			return res.sendStatus(result.status)
+
+			// criar participação
+			executeSql(
+				'insert into evex.Participantes values(@@identity, @funcionario)',
+				{
+					fields: [['funcionario', sql.Int, responsavel]],
+				},
+				(result) => {
+					if (!result.status)
+						if (result.error) result.status = 400
+						else result.status = 200
+					atualizarParticipacoes()
+					return res.sendStatus(result.status)
+				}
+			)
 		}
 	)
 })
