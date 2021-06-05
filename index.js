@@ -71,7 +71,7 @@ router.post('/funcionarios', async (req, res) => {
 })
 
 // PUT editar dados de um funcionario
-router.put('/funcionario', async (req, res) => {
+router.put('/funcionarios', async (req, res) => {
 	const id = req.body.id
 	const nome = req.body.nome
 	const apelido = req.body.apelido
@@ -98,7 +98,7 @@ router.put('/funcionario', async (req, res) => {
 })
 
 // DELETE um funcionario
-router.delete('/funcionario', async (req, res) => {
+router.delete('/funcionarios', async (req, res) => {
 	const id = req.body.id
 	if (!id) return res.sendStatus(400)
 
@@ -186,45 +186,6 @@ router.get('/eventos/gerencio', async (req, res) => {
 	return res.json(eventos)
 })
 
-// GET todos os participantes de um evento
-router.get('/participantes', async (req, res) => {
-	if (!CACHE.participacoes) await atualizarParticipacoes()
-
-	const evento = req.query.evento
-	if (!evento) return res.sendStatus(400)
-
-	let participantes = []
-	for (const participacao of CACHE.participacoes)
-		if (participacao.evento == evento)
-			participantes.push(participacao.funcionario)
-
-	return res.json(participantes)
-})
-
-// POST cria uma nova participação
-router.post('/participantes', async (req, res) => {
-	const evento = req.body.evento
-	const funcionario = req.body.funcionario
-	if (!evento || !funcionario) return res.sendStatus(400)
-
-	executeSql(
-		'insert into evex.Participantes values(@evento, @funcionario)',
-		{
-			fields: [
-				['evento', sql.Int, evento],
-				['funcionario', sql.Int, funcionario],
-			],
-		},
-		(result) => {
-			if (!result.status)
-				if (result.error) result.status = 400
-				else result.status = 200
-			atualizarParticipacoes()
-			return res.sendStatus(result.status)
-		}
-	)
-})
-
 // POST cria um novo evento
 router.post('/eventos', async (req, res) => {
 	const titulo = req.body.titulo
@@ -266,6 +227,7 @@ router.post('/eventos', async (req, res) => {
 
 // PUT edita um evento
 router.put('/eventos', async (req, res) => {
+	const id = req.body.id
 	const titulo = req.body.titulo
 	const descricao = req.body.descricao
 	const responsavel = req.body.responsavel
@@ -273,7 +235,7 @@ router.put('/eventos', async (req, res) => {
 	const subtipo = req.body.subtipo
 	let datahora = req.body.datahora
 	const localizacao = req.body.localizacao
-	if (!titulo || !responsavel || !tipo || !datahora || !localizacao)
+	if (!id || !titulo || !responsavel || !tipo || !datahora || !localizacao)
 		return res.sendStatus(400)
 
 	datahora = new Date(datahora)
@@ -296,6 +258,64 @@ router.put('/eventos', async (req, res) => {
 			if (result.error) result.status = 400
 			else result.status = 200
 			atualizarEventos()
+			return res.sendStatus(result.status)
+		}
+	)
+})
+
+// DELETE remove um evento
+router.delete('/eventos', async (req, res) => {
+	const id = req.body.id
+	if (!id) return res.sendStatus(400)
+
+	executeSql(
+		'delete from evex.Evento where id = @id',
+		{
+			fields: [['id', sql.Int, id]],
+		},
+		(result) => {
+			if (result.error) result.status = 400
+			else result.status = 200
+			atualizarEventos()
+			return res.sendStatus(result.status)
+		}
+	)
+})
+
+// GET todos os participantes de um evento
+router.get('/participantes', async (req, res) => {
+	if (!CACHE.participacoes) await atualizarParticipacoes()
+
+	const evento = req.query.evento
+	if (!evento) return res.sendStatus(400)
+
+	let participantes = []
+	for (const participacao of CACHE.participacoes)
+		if (participacao.evento == evento)
+			participantes.push(participacao.funcionario)
+
+	return res.json(participantes)
+})
+
+// POST cria uma nova participação
+router.post('/participantes', async (req, res) => {
+	const evento = req.body.evento
+	const funcionario = req.body.funcionario
+	if (!evento || !funcionario) return res.sendStatus(400)
+
+	executeSql(
+		'insert into evex.Participantes values(@evento, @funcionario)',
+		{
+			fields: [
+				['evento', sql.Int, evento],
+				['funcionario', sql.Int, funcionario],
+			],
+		},
+		(result) => {
+			if (!result.status)
+				if (result.error) result.status = 400
+				else result.status = 200
+			atualizarParticipacoes()
 			return res.sendStatus(result.status)
 		}
 	)
